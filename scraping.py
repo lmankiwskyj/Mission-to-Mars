@@ -10,6 +10,9 @@ def scrape_all():
     executable_path = {'executable_path': ChromeDriverManager().install()}
     browser = Browser('chrome', **executable_path, headless=True)
     
+    #news title and paragraph variables
+    news_title, news_paragraph = mars_news(browser)
+    
     # Run all scraping functions and store results in dictionary
     data = {
       "news_title": news_title,
@@ -18,8 +21,13 @@ def scrape_all():
       "facts": mars_facts(),
       "last_modified": dt.datetime.now()
         }
+    
+    # Stop webdriver and return data
+    browser.quit()
+    return data
 
 def mars_news(browser):
+    # Scrape Mars News
     # Visit the mars nasa news site
     url = 'https://redplanetscience.com'
     browser.visit(url)
@@ -71,16 +79,12 @@ def featured_image(browser):
     return img_url
 
 def mars_facts():
-      try:
+    try:
       # use 'read_html" to scrape the facts table into a dataframe
       df = pd.read_html('https://galaxyfacts-mars.com')[0]
-        
+
     except BaseException:
       return None
-
-if __name__ == "__main__":
-    # If running as script, print scraped data
-    print(scrape_all())
 
     # Assign columns and set index of dataframe
     df.columns=['description', 'Mars', 'Earth']
@@ -89,21 +93,6 @@ if __name__ == "__main__":
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html()
 
-   # Stop webdriver and return data
-   browser.quit()
-   return data
-
-@app.route("/")
-def index():
-   mars = mongo.db.mars.find_one()
-   return render_template("index.html", mars=mars)
-
-@app.route("/scrape")
-def scrape():
-   mars = mongo.db.mars
-   mars_data = scraping.scrape_all()
-   mars.update({}, mars_data, upsert=True)
-   return redirect('/', code=302)
-
 if __name__ == "__main__":
-   app.run()
+    # If running as script, print scraped data
+    print(scrape_all())
